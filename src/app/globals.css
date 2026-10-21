@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    color: #0f172a;
+    overflow-x: hidden;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+}
+
+.crimson-metric-card {
+  background: linear-gradient(135deg, #be0c1e 0%, #880010 100%);
+  border: 1px solid rgba(190, 12, 30, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(190, 12, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.clean-card-interactive {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.clean-card-interactive:hover {
+  border-color: #fca5a5;
+  box-shadow: 0 12px 28px -6px rgba(220, 38, 38, 0.12);
+  transform: translateY(-2px);
+}
