@@ -21,10 +21,19 @@ export default function AdminOverviewPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [models, setModels] = useState<VehicleModel[]>([]);
 
-  useEffect(() => {
+  const refreshData = () => {
     setProducts(DataStore.getProducts());
     setCategories(DataStore.getCategories());
     setModels(DataStore.getVehicleModels());
+  };
+
+  useEffect(() => {
+    refreshData();
+    DataStore.syncWithSupabase();
+
+    const handleUpdate = () => refreshData();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, []);
 
   const activeProducts = products.filter((p) => p.is_active);

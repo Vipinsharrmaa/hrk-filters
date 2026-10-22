@@ -47,30 +47,47 @@ export default function AdminEditProductPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCategories(DataStore.getCategories());
-    setVehicleModels(DataStore.getVehicleModels());
+    const loadData = () => {
+      setCategories(DataStore.getCategories());
+      setVehicleModels(DataStore.getVehicleModels());
 
-    if (productId) {
-      const found = DataStore.getProductById(productId);
-      if (found) {
-        setProduct(found);
-        setPartNumber(found.part_number);
-        setTitle(found.title);
-        setCategoryId(found.category_id);
-        setMaterialQuality(found.material_quality);
-        setOeReference(found.oe_reference || "");
-        setMrp(found.mrp.toString());
-        setMinOrderQty(found.min_order_qty.toString());
-        setPackMultipleQty(found.pack_multiple_qty.toString());
-        setStockStatus(found.stock_status);
-        setImageUrl(found.image_url || "");
-        setCompatibleModelsStr(found.compatible_models?.join(", ") || "");
-        setCartonPack(found.specs?.["Box Packing"] || found.specs?.["Carton Pack"] || "10 Units / Box");
-        setIsActive(found.is_active);
-        setIsFeatured(found.is_featured);
+      if (productId) {
+        const found = DataStore.getProductById(productId);
+        if (found) {
+          setProduct(found);
+          setPartNumber(found.part_number);
+          setTitle(found.title);
+          setCategoryId(found.category_id);
+          setMaterialQuality(found.material_quality);
+          setOeReference(found.oe_reference || "");
+          setMrp(found.mrp.toString());
+          setMinOrderQty(found.min_order_qty.toString());
+          setPackMultipleQty(found.pack_multiple_qty.toString());
+          setStockStatus(found.stock_status);
+          setImageUrl(found.image_url || "");
+          setCompatibleModelsStr(found.compatible_models?.join(", ") || "");
+          setCartonPack(found.specs?.["Box Packing"] || found.specs?.["Carton Pack"] || "10 Units / Box");
+          setIsActive(found.is_active);
+          setIsFeatured(found.is_featured);
+          setLoading(false);
+          return true;
+        }
       }
-      setLoading(false);
-    }
+      return false;
+    };
+
+    if (loadData()) return;
+
+    // If not in local cache yet, sync with Supabase and re-check
+    DataStore.syncWithSupabase().then(() => {
+      if (!loadData()) {
+        setLoading(false);
+      }
+    });
+
+    const handleUpdate = () => loadData();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, [productId]);
 
   // Handle local file upload with automated image reducer

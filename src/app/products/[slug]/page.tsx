@@ -35,14 +35,31 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (slug) {
+    if (!slug) return;
+
+    const findProduct = () => {
       const found = DataStore.getProductBySlug(slug);
       if (found) {
         setProduct(found);
         setQuantity(found.min_order_qty || 10);
+        setLoading(false);
+        return true;
       }
-      setLoading(false);
-    }
+      return false;
+    };
+
+    if (findProduct()) return;
+
+    // If not in local cache yet, fetch from Supabase Cloud
+    DataStore.syncWithSupabase().then(() => {
+      if (!findProduct()) {
+        setLoading(false);
+      }
+    });
+
+    const handleUpdate = () => findProduct();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, [slug]);
 
   if (loading) {

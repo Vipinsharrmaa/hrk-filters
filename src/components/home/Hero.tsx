@@ -32,6 +32,7 @@ export default function Hero() {
 
   useEffect(() => {
     loadHeroProducts();
+    DataStore.syncWithSupabase();
 
     // Dynamically listen for admin deletions/additions
     const handleUpdate = () => loadHeroProducts();

@@ -17,16 +17,28 @@ import {
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ id: string; label: string }[]>([
+    { id: "all", label: "All" },
+  ]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const refreshProducts = () => {
+  const refreshData = () => {
     setProducts(DataStore.getProducts());
+    const dbCats = DataStore.getCategories().filter((c) => c.is_active);
+    setCategories([
+      { id: "all", label: "All" },
+      ...dbCats.map((c) => ({ id: c.id, label: c.name })),
+    ]);
   };
 
   useEffect(() => {
-    refreshProducts();
+    refreshData();
     DataStore.syncWithSupabase();
+
+    const handleUpdate = () => refreshData();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, []);
 
   const handleToggleActive = (product: Product) => {
@@ -34,13 +46,13 @@ export default function AdminProductsPage() {
       ...product,
       is_active: !product.is_active,
     });
-    refreshProducts();
+    refreshData();
   };
 
   const handleDelete = (id: string, partNumber: string) => {
     if (confirm(`Are you sure you want to remove SKU ${partNumber}?`)) {
       DataStore.deleteProduct(id);
-      refreshProducts();
+      refreshData();
     }
   };
 
@@ -94,21 +106,19 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-          {["all", "air-filter-paper", "air-filter-foam", "oil-filters", "petrol-filters"].map(
-            (cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-colors whitespace-nowrap ${
-                  selectedCategory === cat
-                    ? "bg-slate-900 text-white font-bold"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {cat === "all" ? "All" : cat.replace(/-/g, " ")}
-              </button>
-            )
-          )}
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-colors whitespace-nowrap ${
+                selectedCategory === cat.id
+                  ? "bg-slate-900 text-white font-bold"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
       </div>
 

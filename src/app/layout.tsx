@@ -6,6 +6,7 @@ import AnnouncementTicker from "@/components/layout/AnnouncementTicker";
 import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/cart/CartDrawer";
 import WhatsAppModal from "@/components/cart/WhatsAppModal";
+import StoreSync from "@/components/common/StoreSync";
 
 export const metadata: Metadata = {
   title: "HRK FILTERS | High Performance Automotive Filtration",
@@ -34,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className="bg-white font-sans text-slate-800 antialiased selection:bg-red-600 selection:text-white overflow-x-hidden min-h-screen flex flex-col">
         <CartProvider>
+          <StoreSync />
           <AnnouncementTicker />
           <Navbar />
           <main className="flex-1">{children}</main>

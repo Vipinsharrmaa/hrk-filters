@@ -17,6 +17,11 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     refreshCategories();
+    DataStore.syncWithSupabase();
+
+    const handleUpdate = () => refreshCategories();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, []);
 
   const handleSave = (e: React.FormEvent) => {

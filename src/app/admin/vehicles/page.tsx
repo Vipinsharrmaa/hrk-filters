@@ -20,6 +20,11 @@ export default function AdminVehiclesPage() {
 
   useEffect(() => {
     refreshModels();
+    DataStore.syncWithSupabase();
+
+    const handleUpdate = () => refreshModels();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, []);
 
   const handleAddModel = (e: React.FormEvent) => {

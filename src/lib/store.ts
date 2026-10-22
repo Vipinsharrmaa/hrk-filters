@@ -1,11 +1,16 @@
 "use client";
 
 import { Category, CustomerProfile, Manufacturer, Product, VehicleModel } from "@/types";
-import { sampleProducts } from "./sample-data";
 import {
   saveProductToSupabase,
   deleteProductFromSupabase,
   fetchProductsFromSupabase,
+  fetchCategoriesFromSupabase,
+  saveCategoryToSupabase,
+  deleteCategoryFromSupabase,
+  fetchVehicleModelsFromSupabase,
+  saveVehicleModelToSupabase,
+  deleteVehicleModelFromSupabase,
 } from "./supabase";
 
 export const initialCategories: Category[] = [
@@ -68,69 +73,25 @@ export const initialVehicleModels: VehicleModel[] = [
 ];
 
 export const fullCatalogSeed: Product[] = [
-  ...sampleProducts,
   {
-    id: "sample-hrk-044",
-    part_number: "HRK-044",
-    slug: "hrk-044-maestro-activa-new",
-    title: "Maestro / Activa New Air Filter",
-    category_id: "air-filter-paper",
-    category_name: "Air Filter Paper",
-    material_quality: "Metal Cap",
-    oe_reference: "17210-KWP-D00",
-    mrp: 135.0,
-    min_order_qty: 10,
-    pack_multiple_qty: 10,
-    stock_status: "in_stock",
-    is_featured: false,
-    is_active: true,
-    compatible_models: ["Hero Maestro Edge", "Honda Activa New / 6G"],
-    specs: {
-      "Filter Media": "Deep-Pleated Cellulose",
-      "End Cap": "Heavy Stamped Metal Edge",
-      "Box Packing": "10 Units / Box",
-    },
-  },
-  {
-    id: "sample-hrk-018",
-    part_number: "HRK-018",
-    slug: "hrk-018-yamaha-rx-100-foam",
-    title: "Yamaha RX-100 Air Filter Foam",
-    category_id: "air-filter-foam",
-    category_name: "Air Filter Foam",
-    material_quality: "Open-Cell Foam",
-    oe_reference: "RX-100-AF",
-    mrp: 30.0,
-    min_order_qty: 10,
-    pack_multiple_qty: 10,
-    stock_status: "in_stock",
-    is_featured: false,
-    is_active: true,
-    compatible_models: ["Yamaha RX-100"],
-    specs: {
-      "Filter Media": "Dual Density Flame-Laminated Foam",
-      "Box Packing": "10 Units / Pack",
-    },
-  },
-  {
-    id: "sample-hrk-102",
-    part_number: "HRK-102",
-    slug: "hrk-102-tvs-jupiter-wego",
-    title: "TVS Jupiter / Wego Air Filter",
+    id: "hrk-1792603531814",
+    part_number: "HRK-150",
+    slug: "hrk-150-honda-activa-5g",
+    title: "Honda Activa 5G",
     category_id: "air-filter-paper",
     category_name: "Air Filter Paper",
     material_quality: "Plastic Moulded",
-    oe_reference: "K6040180",
-    mrp: 145.0,
+    oe_reference: "278329928282",
+    mrp: 120.0,
     min_order_qty: 10,
     pack_multiple_qty: 10,
     stock_status: "in_stock",
-    is_featured: false,
+    is_featured: true,
     is_active: true,
-    compatible_models: ["TVS Jupiter 110", "TVS Wego 110"],
+    image_url: "https://hvnmswzolmxyvjfvjfdw.supabase.co/storage/v1/object/public/products/product-images/1792603470367-1.webp",
+    compatible_models: ["Honda Activa 5G"],
     specs: {
-      "Filter Media": "Resin Impregnated Pleated Cellulose",
-      "Housing": "Precision Polyurethane Seal",
+      "Material": "Plastic Moulded",
       "Box Packing": "10 Units / Box",
     },
   },
@@ -244,9 +205,10 @@ export const DataStore = {
 
   deleteProduct(idOrPartNumber: string): void {
     const current = this.getProducts();
-    const clean = idOrPartNumber.trim().toLowerCase();
+    const clean = idOrPartNumber.trim();
+    const cleanLower = clean.toLowerCase();
     const filtered = current.filter(
-      (p) => p.id.toLowerCase() !== clean && p.part_number.toLowerCase() !== clean
+      (p) => p.id.toLowerCase() !== cleanLower && p.part_number.toLowerCase() !== cleanLower
     );
 
     if (typeof window !== "undefined") {
@@ -262,11 +224,25 @@ export const DataStore = {
   async syncWithSupabase(): Promise<void> {
     if (typeof window === "undefined") return;
     try {
-      const remote = await fetchProductsFromSupabase();
-      if (remote && remote.length > 0) {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(remote));
-        notifyStoreUpdate();
+      // 1. Sync Products
+      const remoteProducts = await fetchProductsFromSupabase();
+      if (remoteProducts !== null) {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(remoteProducts));
       }
+
+      // 2. Sync Categories
+      const remoteCategories = await fetchCategoriesFromSupabase();
+      if (remoteCategories !== null && remoteCategories.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(remoteCategories));
+      }
+
+      // 3. Sync Vehicle Models
+      const remoteModels = await fetchVehicleModelsFromSupabase();
+      if (remoteModels !== null && remoteModels.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.MODELS, JSON.stringify(remoteModels));
+      }
+
+      notifyStoreUpdate();
     } catch (err) {
       console.warn("Supabase background sync skipped:", err);
     }
@@ -319,18 +295,27 @@ export const DataStore = {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
       notifyStoreUpdate();
+      // Background sync to Supabase Cloud
+      saveCategoryToSupabase(result).catch((err) => {
+        console.warn("Background Supabase category save skipped:", err);
+      });
     }
     return result;
   },
 
   deleteCategory(idOrSlug: string): void {
-    const clean = idOrSlug.trim().toLowerCase();
+    const clean = idOrSlug.trim();
+    const cleanLower = clean.toLowerCase();
     const categories = this.getCategories().filter(
-      (c) => c.id.toLowerCase() !== clean && c.slug.toLowerCase() !== clean
+      (c) => c.id.toLowerCase() !== cleanLower && c.slug.toLowerCase() !== cleanLower
     );
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
       notifyStoreUpdate();
+      // Background delete from Supabase Cloud
+      deleteCategoryFromSupabase(clean).catch((err) => {
+        console.warn("Background Supabase category delete skipped:", err);
+      });
     }
   },
 
@@ -382,6 +367,10 @@ export const DataStore = {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.MODELS, JSON.stringify(models));
       notifyStoreUpdate();
+      // Background sync to Supabase Cloud
+      saveVehicleModelToSupabase(result).catch((err) => {
+        console.warn("Background Supabase vehicle model save skipped:", err);
+      });
     }
     return result;
   },
@@ -391,6 +380,10 @@ export const DataStore = {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.MODELS, JSON.stringify(models));
       notifyStoreUpdate();
+      // Background delete from Supabase Cloud
+      deleteVehicleModelFromSupabase(id).catch((err) => {
+        console.warn("Background Supabase vehicle model delete skipped:", err);
+      });
     }
   },
 

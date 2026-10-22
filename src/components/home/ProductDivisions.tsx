@@ -23,6 +23,7 @@ export default function ProductDivisions() {
 
   useEffect(() => {
     loadCategories();
+    DataStore.syncWithSupabase();
 
     // Listen for admin changes dynamically
     const handleUpdate = () => loadCategories();

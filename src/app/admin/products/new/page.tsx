@@ -43,8 +43,16 @@ export default function AdminNewProductPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setCategories(DataStore.getCategories());
-    setVehicleModels(DataStore.getVehicleModels());
+    const loadDropdowns = () => {
+      setCategories(DataStore.getCategories());
+      setVehicleModels(DataStore.getVehicleModels());
+    };
+    loadDropdowns();
+    DataStore.syncWithSupabase();
+
+    const handleUpdate = () => loadDropdowns();
+    window.addEventListener("hrk_store_updated", handleUpdate);
+    return () => window.removeEventListener("hrk_store_updated", handleUpdate);
   }, []);
 
   // Handle local file upload with automated image reducer
